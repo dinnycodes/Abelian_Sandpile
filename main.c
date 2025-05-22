@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "tiles.h"
+#include <time.h>
 
 void printBoard(struct Board_square *b){
     for (int i = 0; i < b->height; i++){
@@ -109,8 +110,17 @@ int main(){
     printf("--- Initial Board ---\n");
     printBoard(&board);
 
+    // Measure time before stabilization
+clock_t start = clock();
     // Evolve until stable
     stabilizeBoard(&board);
+
+// Measure time after stabilization
+clock_t end = clock();
+
+// Calculate elapsed time in seconds
+double time_taken = (double)(end - start) / CLOCKS_PER_SEC;
+printf("Time taken to stabilize board: %.10f seconds\n", time_taken);
 
     printf("--- Stabilized Board ---\n");
     printBoard(&board);
