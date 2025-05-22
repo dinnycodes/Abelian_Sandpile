@@ -1,10 +1,8 @@
-all: Sandpiles
-
-Sandpiles: main.c
+all: main.c
 	gcc -o Sandpiles main.c
 
-run: Sandpiles
-	./Sandpiles
-
 clean:
-	$(RM) Sandpiles
+	$(RM)  Sandpiles board.txt *.o *.exe output.png
+
+run:
+	./Sandpiles
