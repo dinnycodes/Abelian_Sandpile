@@ -1,2 +1,2 @@
-# Albelian_Sandpile
-Parallelising albelian sandpile using OpenMP and MPI
+# Abelian_Sandpile
+Parallelising abelian sandpile using OpenMP and MPI
