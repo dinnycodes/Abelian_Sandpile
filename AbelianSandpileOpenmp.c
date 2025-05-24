@@ -32,6 +32,7 @@ void writeBoardToFile(struct Board_square *b, const char *filename) {
     fclose(fp);
 }
 
+// Keep the original overflow function - no changes needed
 void overflowSq(struct Board_square *b, int x, int y, struct Tile_square **buffer){
     int grains_to_give = b->tiles[x][y].value / 4;
     int remainder = b->tiles[x][y].value % 4;
@@ -49,32 +50,36 @@ int stabilizeBoard(struct Board_square *b){
     do {
         changed = 0;
 
-        // Create a new buffer board with all values 0
+        // Create a new buffer board with all values 0 (parallelize allocation)
         struct Tile_square **buffer = malloc(sizeof(struct Tile_square*) * b->height);
+        #pragma omp parallel for
         for (int i = 0; i < b->height; i++) {
             buffer[i] = calloc(b->width, sizeof(struct Tile_square));
         }
 
-
-
-        #pragma omp parallel for collapse(2) reduction(||:changed)
-for (int i = 0; i < b->height; i++) {
-    for (int j = 0; j < b->width; j++) {
-        if (b->tiles[i][j].value >= 4) {
-            overflowSq(b, i, j, buffer);
-            changed = 1;
-        } else {
-            buffer[i][j].value += b->tiles[i][j].value;
+        // SERIAL processing of overflow logic to maintain correctness
+        for (int i = 0; i < b->height; i++) {
+            for (int j = 0; j < b->width; j++) {
+                if (b->tiles[i][j].value >= 4) {
+                    overflowSq(b, i, j, buffer);
+                    changed = 1;
+                } else {
+                    buffer[i][j].value += b->tiles[i][j].value;
+                }
+            }
         }
-    }
-}
 
-
-        // Copy buffer back into board
+        // Copy buffer back into board (parallelize this part)
+        #pragma omp parallel for collapse(2)
         for (int i = 0; i < b->height; i++) {
             for (int j = 0; j < b->width; j++) {
                 b->tiles[i][j].value = buffer[i][j].value;
             }
+        }
+        
+        // Free buffer (parallelize cleanup)
+        #pragma omp parallel for
+        for (int i = 0; i < b->height; i++) {
             free(buffer[i]);
         }
         free(buffer);
@@ -86,6 +91,7 @@ for (int i = 0; i < b->height; i++) {
 }
 
 void initializeBoard(struct Board_square *b, int value){
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < b->height; i++)
         for (int j = 0; j < b->width; j++)
             b->tiles[i][j].value = value;
@@ -115,17 +121,16 @@ int main(){
     printf("--- Initial Board ---\n");
     printBoard(&board);
 
-    // Measure time before stabilization
-clock_t start = clock();
+    // Measure time before stabilization using OpenMP timer
+    double start = omp_get_wtime();
+    
     // Evolve until stable
     stabilizeBoard(&board);
 
-// Measure time after stabilization
-clock_t end = clock();
-
-// Calculate elapsed time in seconds
-double time_taken = (double)(end - start) / CLOCKS_PER_SEC;
-printf("Time taken to stabilize board: %.10f seconds\n", time_taken);
+    // Measure time after stabilization
+    double end = omp_get_wtime();
+    double time_taken = end - start;
+    printf("Time taken to stabilize board: %.10f seconds\n", time_taken);
 
     printf("--- Stabilized Board ---\n");
     printBoard(&board);

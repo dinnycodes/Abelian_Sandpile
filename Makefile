@@ -1,12 +1,29 @@
-all: main.c
-	gcc -o Sandpiles main.c
-	gcc -o SandpileOpenmp AbelianSandpileOpenmp.c -fopenmp
+CC = gcc
+CFLAGS = -Wall -O2
+OMPFLAGS = -fopenmp
 
-openmp:
-	gcc -o SandpileOpenmp AbelianSandpileOpenmp.c -fopenmp
+# Default target: build both versions
+all: sandpile openmp
 
-clean:
-	$(RM)  Sandpiles SandpileOpenmp board.txt *.o *.exe output.png
+# Serial version build
+sandpile: main.c
+	$(CC) $(CFLAGS) -o Sandpiles main.c
 
-run:
+# OpenMP version build
+openmp: AbelianSandpileOpenmp.c
+	$(CC) $(CFLAGS) $(OMPFLAGS) -o SandpileOpenmp AbelianSandpileOpenmp.c
+
+# Run both
+run_all: run_serial run_openmp
+
+# Run serial
+run_serial: sandpile
 	./Sandpiles
+
+# Run OpenMP
+run_openmp: openmp
+	./SandpileOpenmp
+
+# Clean up all generated files
+clean:
+	$(RM) Sandpiles SandpileOpenmp board.txt *.o *.exe output.png
