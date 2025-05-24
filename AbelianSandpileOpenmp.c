@@ -32,30 +32,16 @@ void writeBoardToFile(struct Board_square *b, const char *filename) {
     fclose(fp);
 }
 
-// Parallelized overflow function with atomic operations for neighbor updates
+// Keep the original overflow function - no changes needed
 void overflowSq(struct Board_square *b, int x, int y, struct Tile_square **buffer){
     int grains_to_give = b->tiles[x][y].value / 4;
     int remainder = b->tiles[x][y].value % 4;
 
-    // Use atomic operations for neighbor updates to avoid race conditions
-    if (x > 0) {
-        #pragma omp atomic
-        buffer[x - 1][y].value += grains_to_give;
-    }
-    if (x < b->height-1) {
-        #pragma omp atomic
-        buffer[x + 1][y].value += grains_to_give;
-    }
-    if (y > 0) {
-        #pragma omp atomic
-        buffer[x][y - 1].value += grains_to_give;
-    }
-    if (y < b->width-1) {
-        #pragma omp atomic
-        buffer[x][y + 1].value += grains_to_give;
-    }
+    if (x > 0)           buffer[x - 1][y].value += grains_to_give;
+    if (x < b->height-1) buffer[x + 1][y].value += grains_to_give;
+    if (y > 0)           buffer[x][y - 1].value += grains_to_give;
+    if (y < b->width-1)  buffer[x][y + 1].value += grains_to_give;
 
-    // No atomic needed here - each thread writes to its own cell
     buffer[x][y].value += remainder;
 }
 
@@ -64,28 +50,26 @@ int stabilizeBoard(struct Board_square *b){
     do {
         changed = 0;
 
-        // Create a new buffer board with all values 0
+        // Create a new buffer board with all values 0 (parallelize allocation)
         struct Tile_square **buffer = malloc(sizeof(struct Tile_square*) * b->height);
         #pragma omp parallel for
         for (int i = 0; i < b->height; i++) {
             buffer[i] = calloc(b->width, sizeof(struct Tile_square));
         }
 
-        // Parallelize the main computation loop
-        #pragma omp parallel for collapse(2) reduction(||:changed)
+        // SERIAL processing of overflow logic to maintain correctness
         for (int i = 0; i < b->height; i++) {
             for (int j = 0; j < b->width; j++) {
                 if (b->tiles[i][j].value >= 4) {
                     overflowSq(b, i, j, buffer);
                     changed = 1;
                 } else {
-                    // No atomic needed - each thread writes to its own cell
                     buffer[i][j].value += b->tiles[i][j].value;
                 }
             }
         }
 
-        // Copy buffer back into board (parallelized)
+        // Copy buffer back into board (parallelize this part)
         #pragma omp parallel for collapse(2)
         for (int i = 0; i < b->height; i++) {
             for (int j = 0; j < b->width; j++) {
@@ -93,7 +77,7 @@ int stabilizeBoard(struct Board_square *b){
             }
         }
         
-        // Free buffer (parallelized)
+        // Free buffer (parallelize cleanup)
         #pragma omp parallel for
         for (int i = 0; i < b->height; i++) {
             free(buffer[i]);
