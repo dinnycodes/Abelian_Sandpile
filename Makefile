@@ -2,8 +2,8 @@ CC = gcc
 CFLAGS = -Wall -O2
 OMPFLAGS = -fopenmp
 
-# Default target: build both versions
-all: sandpile openmp
+# Default target: build all three versions
+all: sandpile openmp run_asyncserial asyncopenmp 
 
 # Serial version build
 sandpile: main.c
@@ -13,17 +13,29 @@ sandpile: main.c
 openmp: AbelianSandpileOpenmp.c
 	$(CC) $(CFLAGS) $(OMPFLAGS) -o SandpileOpenmp AbelianSandpileOpenmp.c
 
-# Run both
-run_all: run_serial run_openmp
+# Async OpenMP version build
+asyncopenmp: AsyncOpenmp.c
+	$(CC) $(CFLAGS) $(OMPFLAGS) -o AsyncOpenmp AsyncOpenmp.c
 
-# Run serial
+# Async Serial version build
+asyncserial: AsyncSerial.c
+	$(CC) $(CFLAGS) $(OMPFLAGS) -o AsyncSerial AsyncSerial.c
+
+# Run all versions
+run_all: run_serial run_openmp run_asyncserial  run_async_openmp
+
 run_serial: sandpile
 	./Sandpiles
 
-# Run OpenMP
 run_openmp: openmp
 	./SandpileOpenmp
 
+run_asyncserial: asyncserial
+	./AsyncSerial
+
+run_asyncopenmp: asyncopenmp
+	./AsyncOpenmp
+
 # Clean up all generated files
 clean:
-	$(RM) Sandpiles SandpileOpenmp board.txt *.o *.exe output.png
+	$(RM) Sandpiles SandpileOpenmp AsyncOpenmp AsyncSerial board.txt *.o *.exe output.png
