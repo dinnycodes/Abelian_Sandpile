@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "tiles.h"
-#include <time.h>
-#include <omp.h>
+#include <time.h> 
+
 
 void printBoard(struct Board_square *b){
     for (int i = 0; i < b->height; i++){
@@ -32,30 +32,15 @@ void writeBoardToFile(struct Board_square *b, const char *filename) {
     fclose(fp);
 }
 
-// Parallelized overflow function with atomic operations for neighbor updates
 void overflowSq(struct Board_square *b, int x, int y, struct Tile_square **buffer){
     int grains_to_give = b->tiles[x][y].value / 4;
     int remainder = b->tiles[x][y].value % 4;
 
-    // Use atomic operations for neighbor updates to avoid race conditions
-    if (x > 0) {
-        #pragma omp atomic
-        buffer[x - 1][y].value += grains_to_give;
-    }
-    if (x < b->height-1) {
-        #pragma omp atomic
-        buffer[x + 1][y].value += grains_to_give;
-    }
-    if (y > 0) {
-        #pragma omp atomic
-        buffer[x][y - 1].value += grains_to_give;
-    }
-    if (y < b->width-1) {
-        #pragma omp atomic
-        buffer[x][y + 1].value += grains_to_give;
-    }
+    if (x > 0)           buffer[x - 1][y].value += grains_to_give;
+    if (x < b->height-1) buffer[x + 1][y].value += grains_to_give;
+    if (y > 0)           buffer[x][y - 1].value += grains_to_give;
+    if (y < b->width-1)  buffer[x][y + 1].value += grains_to_give;
 
-    // No atomic needed here - each thread writes to its own cell
     buffer[x][y].value += remainder;
 }
 
@@ -66,36 +51,26 @@ int stabilizeBoard(struct Board_square *b){
 
         // Create a new buffer board with all values 0
         struct Tile_square **buffer = malloc(sizeof(struct Tile_square*) * b->height);
-        #pragma omp parallel for
         for (int i = 0; i < b->height; i++) {
             buffer[i] = calloc(b->width, sizeof(struct Tile_square));
         }
 
-        // Parallelize the main computation loop
-        #pragma omp parallel for collapse(2) reduction(||:changed)
         for (int i = 0; i < b->height; i++) {
             for (int j = 0; j < b->width; j++) {
                 if (b->tiles[i][j].value >= 4) {
                     overflowSq(b, i, j, buffer);
                     changed = 1;
                 } else {
-                    // No atomic needed - each thread writes to its own cell
                     buffer[i][j].value += b->tiles[i][j].value;
                 }
             }
         }
 
-        // Copy buffer back into board (parallelized)
-        #pragma omp parallel for collapse(2)
+        // Copy buffer back into board
         for (int i = 0; i < b->height; i++) {
             for (int j = 0; j < b->width; j++) {
                 b->tiles[i][j].value = buffer[i][j].value;
             }
-        }
-        
-        // Free buffer (parallelized)
-        #pragma omp parallel for
-        for (int i = 0; i < b->height; i++) {
             free(buffer[i]);
         }
         free(buffer);
@@ -107,7 +82,6 @@ int stabilizeBoard(struct Board_square *b){
 }
 
 void initializeBoard(struct Board_square *b, int value){
-    #pragma omp parallel for collapse(2)
     for (int i = 0; i < b->height; i++)
         for (int j = 0; j < b->width; j++)
             b->tiles[i][j].value = value;
@@ -134,22 +108,23 @@ int main(){
     // Initialize board with value 4
     initializeBoard(&board, 4);
 
-    printf("--- Initial Board ---\n");
-    printBoard(&board);
+ //   printf("--- Initial Board ---\n");
+  //  printBoard(&board);
 
-    // Measure time before stabilization using OpenMP timer
-    double start = omp_get_wtime();
-    
-    // Evolve until stable
+
+        // Evolve until stable
+    clock_t start = clock();  // ⏱️ Start timing
+
     stabilizeBoard(&board);
 
-    // Measure time after stabilization
-    double end = omp_get_wtime();
-    double time_taken = end - start;
-    printf("Time taken to stabilize board: %.10f seconds\n", time_taken);
+    clock_t end = clock();    // ⏱️ Stop timing
+    double time_taken = (double)(end - start) / CLOCKS_PER_SEC;
+    printf("Stabilization took %.6f seconds\n", time_taken);
 
-    printf("--- Stabilized Board ---\n");
-    printBoard(&board);
+    
+
+   // printf("--- Stabilized Board ---\n");
+   // printBoard(&board);
 
     //Print final state to file
     writeBoardToFile(&board, "board.txt");
