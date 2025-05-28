@@ -67,32 +67,61 @@ int async_topple(struct Board_square *b, int y, int x) {
 
 // Stabilize board using OpenMP with checkerboard phase-based updates
 int stabilizeBoard(struct Board_square *b) {
-    int changed;
+    int height = b->height;
+    int width = b->width;
 
+    // Allocate buffer grid for double buffering
+    struct Tile_square **next = malloc(sizeof(struct Tile_square *) * height);
+    for (int i = 0; i < height; i++) {
+        next[i] = malloc(sizeof(struct Tile_square) * width);
+        for (int j = 0; j < width; j++) {
+            next[i][j].value = 0;
+        }
+    }
+
+    int changed;
     do {
         changed = 0;
-        for (int phase = 0; phase < 2; phase++) {
-            int local_changed = 0;
 
-            #pragma omp parallel for collapse(2) reduction(|:local_changed)
-            for (int i = 0; i < b->height; i++) {
-                for (int j = 0; j < b->width; j++) {
-                    if ((i + j) % 2 == phase) {
-                        if (b->tiles[i][j].value >= 4) {
-                            if (async_topple(b, i, j)) {
-                                local_changed = 1;
-                            }
-                        }
-                    }
+        // Parallelize the update using OpenMP
+        #pragma omp parallel for collapse(2) reduction(|:changed)
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                int v = b->tiles[i][j].value;
+                if (v >= 4) {
+                    int div4 = v / 4;
+                    next[i][j].value += v % 4;
+                    if (i > 0) next[i - 1][j].value += div4;
+                    if (i < height - 1) next[i + 1][j].value += div4;
+                    if (j > 0) next[i][j - 1].value += div4;
+                    if (j < width - 1) next[i][j + 1].value += div4;
+                    changed = 1;
+                } else {
+                    next[i][j].value += v;
                 }
             }
-
-            changed |= local_changed;
         }
+
+        // Copy from next → current, and reset next
+        #pragma omp parallel for collapse(2)
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                b->tiles[i][j].value = next[i][j].value;
+                next[i][j].value = 0;
+            }
+        }
+
     } while (changed);
+
+    // Free the buffer
+    for (int i = 0; i < height; i++) {
+        free(next[i]);
+    }
+    free(next);
 
     return 0;
 }
+
 
 // Initialize board with constant value
 void initializeBoard(struct Board_square *b, int value) {
