@@ -4,18 +4,6 @@
 #include <time.h>
 #include "tiles.h"  
 
-// Print the sandpile board to the terminal
-void printBoard(struct Board_square *b) {
-    for (int i = 0; i < b->height; i++) {
-        printf("[");
-        for (int j = 0; j < b->width; j++) {
-            printf(" %d ", b->tiles[i][j].value);
-            if (j < b->width - 1) printf(",");
-        }
-        printf("]\n");
-    }
-    printf("\n");
-}
 
 // Write final board to file
 void writeBoardToFile(struct Board_square *b, const char *filename) {
@@ -96,18 +84,15 @@ int main() {
     // Initialize grid with grains
     initializeBoard(&board, 4);
 
-    printf("--- Initial Board ---\n");
-    printBoard(&board);
-
+ 
     clock_t start = clock();
     stabilizeBoard(&board);
     clock_t end = clock();
 
     double time_taken = ((double)(end - start)) / CLOCKS_PER_SEC;
-    printf("Time taken to stabilize board: %.10f seconds\n", time_taken);
 
-    printf("--- Stabilized Board ---\n");
-    printBoard(&board);
+    printf("Board size: %d x %d\n", width, height);
+    printf("Time taken to stabilize board: %.10f seconds\n", time_taken);
 
     writeBoardToFile(&board, "board.txt");
     printf("Board written to board.txt\n");
