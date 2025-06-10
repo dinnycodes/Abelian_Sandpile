@@ -3,7 +3,7 @@ CC = gcc
 MPICC = mpicc
 
 # Flags
-CFLAGS = -Wall -O2
+CFLAGS = -Wall -O2 -std=c99
 OMPFLAGS = -fopenmp
 
 # Targets
