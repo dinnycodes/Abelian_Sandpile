@@ -1,41 +1,51 @@
+# Compiler variables
 CC = gcc
+MPICC = mpicc
+
+# Flags
 CFLAGS = -Wall -O2
 OMPFLAGS = -fopenmp
 
-# Default target: build all three versions
-all: sandpile openmp run_asyncserial asyncopenmp 
+# Targets
+all: asyncserial syncserial openmp mpi
 
-# Serial version build
-sandpile: main.c
-	$(CC) $(CFLAGS) -o Sandpiles main.c
+# Serial async version
+asyncserial: asyncserial.c
+	$(CC) $(CFLAGS) -o asyncserial asyncserial.c
 
-# OpenMP version build
-openmp: AbelianSandpileOpenmp.c
-	$(CC) $(CFLAGS) $(OMPFLAGS) -o SandpileOpenmp AbelianSandpileOpenmp.c
+# Serial sync version
+syncserial: syncserial.c
+	$(CC) $(CFLAGS) -o syncserial syncserial.c
 
-# Async OpenMP version build
-asyncopenmp: AsyncOpenmp.c
-	$(CC) $(CFLAGS) $(OMPFLAGS) -o AsyncOpenmp AsyncOpenmp.c
+# OpenMP version
+openmp: openmp.c
+	$(CC) $(CFLAGS) $(OMPFLAGS) -o openmp openmp.c
 
-# Async Serial version build
-asyncserial: AsyncSerial.c
-	$(CC) $(CFLAGS) $(OMPFLAGS) -o AsyncSerial AsyncSerial.c
+# MPI version
+mpi: mpi.c
+	$(MPICC) $(CFLAGS) -o mpi mpi.c
 
-# Run all versions
-run_all: run_serial run_openmp run_asyncserial  run_async_openmp
+# Run targets
+run_asyncserial: asyncserial
+	./asyncserial
 
-run_serial: sandpile
-	./Sandpiles
+run_syncserial: syncserial
+	./syncserial
 
 run_openmp: openmp
-	./SandpileOpenmp
+	./openmp
 
-run_asyncserial: asyncserial
-	./AsyncSerial
+run_mpi: mpi
+	mpirun -np 7 ./mpi
 
-run_asyncopenmp: asyncopenmp
-	./AsyncOpenmp
-
-# Clean up all generated files
+# Clean target
 clean:
-	$(RM) Sandpiles SandpileOpenmp AsyncOpenmp AsyncSerial board.txt *.o *.exe output.png
+	$(RM) asyncserial syncserial openmp mpi *.txt *.png *.out
+
+check: asyncserial mpi
+	@echo "=== Running serial async ==="
+	@printf "129 129\n" | ./asyncserial
+	@echo "=== Running MPI (4 ranks) ==="
+	@printf "129 129\n" | mpirun -np 4 ./mpi
+	@echo "=== Diffing outputs ==="
+	@diff serial.out mpi.out && echo "Match! Correctness verified" || (echo "Mismatch! Parallel is not corect." && exit 1)

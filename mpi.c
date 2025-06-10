@@ -3,6 +3,23 @@
 #include <stdio.h>
 #include "tiles.h"
 
+
+void writeBoardToFile(struct Board_square *b, const char *filename) {
+    FILE *fp = fopen(filename, "w");
+    if (!fp) {
+        perror("Failed to open output file");
+        return;
+    }
+    for (int i = 0; i < b->height; i++) {
+        for (int j = 0; j < b->width; j++) {
+            fprintf(fp, "%d ", b->tiles[i][j].value);
+        }
+        fprintf(fp, "\n");
+    }
+    fclose(fp);
+
+}
+
 // Parallel Abelian sandpile using 1D row decomposition with timing
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
@@ -130,21 +147,38 @@ int main(int argc, char **argv) {
     double t_end = MPI_Wtime();
 
     if (rank == 0) {
-        // Write to file
-        FILE *f = fopen("board.txt", "w");
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < W; j++) fprintf(f, "%d ", global[i*W + j]);
-            fprintf(f, "\n");
-        }
-        fclose(f);
+        struct Board_square board;
+        board.height = height;
+        board.width  = W;
 
-        printf("Board written to board.txt\n");
+        // allocate the 2D tiles array in board
+        board.tiles = malloc(board.height * sizeof(*board.tiles));
+        for (int i = 0; i < board.height; i++) {
+            board.tiles[i] = calloc(board.width, sizeof(*board.tiles[i]));
+            for (int j = 0; j < board.width; j++) {
+                board.tiles[i][j].value = global[i * board.width + j];
+            }
+        }
+
+        // write out once to “board.txt”
+        writeBoardToFile(&board, "board.txt");
+        // write again to “mpi.out”
+        writeBoardToFile(&board, "mpi.out");
+
+        // clean up
+        for (int i = 0; i < board.height; i++) {
+            free(board.tiles[i]);
+        }
+        free(board.tiles);
+
+        printf("Board written to board.txt and mpi.out\n");
         printf("Total execution time: %.6f seconds\n", t_end - t_start);
 
         free(global);
         free(counts);
         free(displs);
     }
+
 
     // Cleanup
     free(outbuf);

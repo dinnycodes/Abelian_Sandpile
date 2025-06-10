@@ -19,6 +19,7 @@ void writeBoardToFile(struct Board_square *b, const char *filename) {
         fprintf(fp, "\n");
     }
     fclose(fp);
+
 }
 
 // Asynchronous topple logic (in-place update)
@@ -95,6 +96,7 @@ int main() {
     printf("Time taken to stabilize board: %.10f seconds\n", time_taken);
 
     writeBoardToFile(&board, "board.txt");
+    writeBoardToFile(&board, "serial.out");
     printf("Board written to board.txt\n");
 
     // Clean up memory
