@@ -42,10 +42,21 @@ run_mpi: mpi
 clean:
 	$(RM) asyncserial syncserial openmp mpi *.txt *.png *.out
 
-check: asyncserial mpi
+check: asyncserial openmp mpi
 	@echo "=== Running serial async ==="
-	@printf "129 129\n" | ./asyncserial
+	@printf "513 513\n" | ./asyncserial
+	@echo "=== Running OpenMP ==="
+	@printf "513 513\n" | ./openmp
 	@echo "=== Running MPI (4 ranks) ==="
-	@printf "129 129\n" | mpirun -np 4 ./mpi
-	@echo "=== Diffing outputs ==="
-	@diff serial.out mpi.out && echo "Match! Correctness verified" || (echo "Mismatch! Parallel is not corect." && exit 1)
+	@printf "513 513\n" | mpirun -np 4 ./mpi
+
+	@echo "=== Diff serial vs OpenMP ==="
+	@diff serial.out openmp.out \
+		&& echo "OpenMP matches serial" \
+		|| (echo "OpenMP mismatch!" && exit 1)
+
+	@echo "=== Diff serial vs MPI ==="
+	@diff serial.out mpi.out \
+		&& echo "MPI matches serial" \
+		|| (echo "MPI mismatch!" && exit 1)
+
