@@ -1,0 +1,46 @@
+#!/bin/bash
+#PBS -P WCHPC
+#PBS -N sandpile_async_parallel_2_24
+#PBS -l select=2:ncpus=24:mpiprocs=24:mem=120gb
+#PBS -l walltime=00:30:00
+#PBS -q normal
+#PBS -m abe
+#PBS -M MTMLIL003@myuct.ac.za
+#PBS -r n
+#PBS -o std_out
+#PBS -e std_error
+#PBS
+
+
+
+module purge
+unset I_MPI_ROOT
+unset LD_LIBRARY_PATH
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+module load chpc/parallel_studio_xe/18.0.2/2018.2.046
+source /apps/compilers/intel/parallel_studio_xe_2018_update2/compilers_and_libraries_2018.2.199/linux/mpi/intel64/bin/mpivars.sh     
+
+# Explicitly enforce Intel MPI libraries
+export LD_LIBRARY_PATH=/apps/compilers/intel/parallel_studio_xe_2018_update2/compilers_and_libraries_2018.2.199/linux/mpi/intel64/lib:$LD_LIBRARY_PATH
+
+cd $PBS_O_WORKDIR
+
+
+exe="/home/student29/mpi_project/mpi_final/mpi"
+
+
+# === Runtime diagnostics (optional, for debugging) ===
+echo "Using mpiexec from: $(which mpiexec)"
+echo "Using mpicc from: $(which mpicc)"
+echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+ldd $exe | grep mpi
+
+if [ ! -x "$exe" ]; then
+    echo "ERROR: Executable $exe not found or not executable"
+    exit 1
+fi
+
+cp "$PBS_NODEFILE" hostfile
+# === Run ===
+mpiexec -np "$(wc -l < $PBS_NODEFILE)" "$exe"
