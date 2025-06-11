@@ -99,21 +99,20 @@ make clean
 ## Running OpenMP on the CHPC cluster
 
 ---
-
+## Running MPI on the CHPC cluster
+---
 ## Dependencies
 
 * GCC with OpenMP support
 * OpenMP
 * MPI compiler (e.g. `mpicc`)
+* Intel compiler with MPI
 
 
-## Running MPI on the CHPC cluster
 
----
 
-## Dependencies
 
-*Intel compiler with MPI
+
 
 
 
