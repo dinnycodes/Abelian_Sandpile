@@ -105,3 +105,16 @@ make clean
 * GCC with OpenMP support
 * OpenMP
 * MPI compiler (e.g. `mpicc`)
+
+
+## Running MPI on the CHPC cluster
+
+---
+
+## Dependencies
+
+*Intel compiler with MPI
+
+
+
+  
