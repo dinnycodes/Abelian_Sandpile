@@ -1,0 +1,36 @@
+#!/bin/bash
+#PBS -P WCHPC
+#PBS -N asyncserial
+#PBS -q serial
+#PBS -l select=1:ncpus=1:mem=16gb
+#PBS -l walltime=00:50:00
+#PBS -o asyncserialoutput.txt
+#PBS -e asyncserialerror.txt
+#PBS -m abe
+#PBS -M chldin002@myuct.ac.za
+
+cd $PBS_O_WORKDIR
+
+# Compile the serial version
+echo "Compiling AsyncSerial..."
+
+# Load correct compiler
+module load gcc/6.1.0
+
+make asyncserial
+
+#Create the output directory for all files that show time taken for each grid size
+mkdir asyncserialoutput
+
+
+# List of grid sizes
+for size in 129 257 385 513 729 1025
+do
+    echo "Running grid size ${size}x${size}"
+
+    # Run your serial program with piped input
+    echo -e "${size}\n${size}" | make run_asyncserial > asyncserialoutput/output_${size}.txt 2>&1
+
+    echo "Completed grid size ${size}x${size}"
+    echo "---------------------------------"
+done
