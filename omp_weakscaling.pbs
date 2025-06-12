@@ -1,0 +1,40 @@
+#!/bin/bash
+#PBS -P WCHPC
+#PBS -N openmp_weak_scaling
+#PBS -q smp
+#PBS -l select=1:ncpus=24:mem=16gb
+#PBS -l walltime=01:00:00
+#PBS -o output_omp_weak_scaling.txt
+#PBS -e error_omp_weak_scaling.txt
+#PBS -m abe
+#PBS -M chldin002@myuct.ac.za
+
+cd $PBS_O_WORKDIR
+
+module purge
+module load gcc/6.1.0
+
+# Compile OpenMP version once
+make openmp
+
+
+# Create the output directory
+mkdir -p omp_weakscaling_output
+
+# Arrays of threads and matching grid sizes (weak scaling)
+THREADS=(1 2 4 8 12 16 20 24)
+GRIDX=(100 200 200 400 400 400 500 600)
+GRIDY=(100 100 200 200 300 400 400 400)
+
+# Loop through each test case
+for i in ${!THREADS[@]}
+do
+    THREAD=${THREADS[$i]}
+    X=${GRIDX[$i]}
+    Y=${GRIDY[$i]}
+
+    export OMP_NUM_THREADS=$THREAD
+
+    echo "Running grid size ${X}x${Y} with ${THREAD} threads"
+    echo -e "${X}\n${Y}" | ./openmp > omp_weakscaling_output/output_openmp_${X}x${Y}_${THREAD}threads.txt 2>&1
+done
