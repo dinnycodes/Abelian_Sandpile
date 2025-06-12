@@ -142,7 +142,12 @@ Outputs are written to the `omp_problemscaling_output`, `omp_strongscaling_outpu
 * MPI compiler (e.g. `mpicc`)
 * Intel compiler with MPI
 
+### Submit job:
 
+   ```
+   qsub Intel_2018_10node24_test.pbs
+
+Outputs are written to the same folder as the batch script.
 
 
 
