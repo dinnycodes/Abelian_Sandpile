@@ -147,6 +147,7 @@ Outputs are written to the `omp_problemscaling_output`, `omp_strongscaling_outpu
    ```
    qsub Intel_2018_10node24_test.pbs
 
+   ```
 Outputs are written to the same folder as the batch script.
 
 
