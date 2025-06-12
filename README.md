@@ -123,7 +123,6 @@ Outputs are written to the `omp_problemscaling_output`, `omp_strongscaling_outpu
 ## Dependencies
 
 * GCC with OpenMP support
-* OpenMP
 * MPI compiler (e.g. `mpicc`)
 * Intel compiler with MPI
 
