@@ -57,6 +57,22 @@ For all versions, you will be prompted to input:
 <grid width>
 <grid height>
 ```
+---
+
+## Visualising the Board
+
+You can generate an image of the board output using the provided `Render_board.py` script.
+
+Make sure you have a valid `board.txt` file (produced by the Serial, OpenMP or MPI versions).
+
+Then run:
+
+```bash
+python3 Render_board.py
+```
+
+This will read `board.txt` and generate a PNG image (`output.png`) showing the final stabilised board.
+
 
 ---
 
