@@ -17,12 +17,12 @@ module load gcc/6.1.0
 # Compile OpenMP version once
 make openmp
 
-mkdir -p omp_ss_output
+mkdir -p omp_strongscaling_output
 
 # List of threads to test
 for threads in 4 8 12 16 20 24
 do
     export OMP_NUM_THREADS=$threads
     echo "Running with $threads threads"
-    echo -e "513\n513" | ./openmp > omp_ss_output/output_openmp_513_${threads}.txt 2>&1
+    echo -e "513\n513" | ./openmp > omp_strongscaling_output/output_openmp_513_${threads}.txt 2>&1
 done

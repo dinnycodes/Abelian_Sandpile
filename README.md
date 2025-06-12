@@ -96,7 +96,26 @@ A success message will be shown if the outputs match.
 make clean
 ```
 ---
-## Running OpenMP on the CHPC cluster
+## Running OpenMP on CHPC
+
+We provide the following PBS scripts to run OpenMP jobs:
+
+* `omp_problem.pbs` — tests for different problem sizes from 129 to 1025 with fixed number of threads (20)
+* `omp_strongscaling.pbs` — strong scaling (fixed problem size to 513x513, varying threads from 2 to 24)
+* `omp_weakscaling.pbs` — weak scaling (problem size grows with threads)
+
+
+### Submit job:
+
+   ```
+   qsub omp_problem.pbs
+   qsub omp_strongscaling.pbs
+   qsub omp_weakscaling.pbs
+   ```
+
+Outputs are written to the `omp_problemscaling_output`, `omp_strongscaling_output`, or `omp_weakscaling_output` folders.
+
+
 
 ---
 ## Running MPI on the CHPC cluster

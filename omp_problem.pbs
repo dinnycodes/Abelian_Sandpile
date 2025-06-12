@@ -21,11 +21,11 @@ export OMP_NUM_THREADS=20
 make openmp
 
 # Create the output directory.
-mkdir -p ompproblemscaling
+mkdir -p omp_problemscaling_output
 
 # List of grid sizes to test
 for size in 129 257 385 513 729 1025
 do
     echo "Running grid size ${size}x${size} with ${OMP_NUM_THREADS} threads"
-    echo -e "${size}\n${size}" | ./openmp > ompproblemscaling/output_openmp_${size}.txt 2>&1
+    echo -e "${size}\n${size}" | ./openmp > omp_problemscaling_output/output_openmp_${size}.txt 2>&1
 done
